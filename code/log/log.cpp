@@ -160,12 +160,8 @@ void Log::write(int level, const char* format, ...){
         buff_.HasWritten(m);
         buff_.Append("\n\0", 2);
 
-        if(isAsync_ && deque_ && !deque_->full()) {
-            deque_->push_back(buff_.RetrieveAlltoStr());
-        } 
-		else {
-            fputs(buff_.Peek(), fp_);
-        }
+        if(isAsync_ && deque_ && !deque_->full()) deque_->push_back(buff_.RetrieveAlltoStr()); 
+		else fputs(buff_.Peek(), fp_);
         buff_.RetrieveAll();
 	}
 }
