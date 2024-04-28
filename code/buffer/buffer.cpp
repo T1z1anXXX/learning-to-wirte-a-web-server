@@ -100,11 +100,38 @@ void Buffer::Append(const Buffer& buff){
 	Append(buff.Peek(), buff.ReadableBytes());
 }
 
-// ssize_t Buffer::ReadFd(int fd, int* saveErrno){
-// 	
-// } 
+ssize_t Buffer::ReadFd(int fd, int* saveErrno){
+	char buff[65535];
+	struct iovec iov[2];
+	const size_t writable = WritableBytes();
 
-// ssize_t Buffer::WriteFd(int fd, int* saveErrno){
-// 	
-// }
+	iov[0].iov_base = BeginPtr_()+writePos_;
+	iov[0].iov_len = writable;
+	iov[1].iov_base = buff;
+	iov[1].iov_len = sizeof(buff);
+
+	const ssize_t len = readv(fd, iov, 2);
+	if(len<0){
+		*saveErrno = errno;
+	}
+	else if(static_cast<size_t>(len)<=writable){
+		writePos_ += len;
+	}
+	else{
+		writePos_ = buffer_.size();
+		Append(buff, len-writable);
+	}
+	return len;
+ } 
+
+ssize_t Buffer::WriteFd(int fd, int* saveErrno){
+	size_t readSize = ReadableBytes();
+	ssize_t len = write(fd, Peek(), readSize);
+	if(len < 0){
+		*saveErrno = errno;
+		return len;
+	}
+	readPos_ += len;
+	return len;
+}
 
